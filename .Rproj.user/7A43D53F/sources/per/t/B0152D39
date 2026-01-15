@@ -1,0 +1,26 @@
+{
+    "id": "B0152D39",
+    "path": "~/Desktop/alz-inference-analysis/R/proportion_z_test.R",
+    "project_path": "R/proportion_z_test.R",
+    "type": "r_source",
+    "hash": "1594000371",
+    "contents": "",
+    "dirty": false,
+    "created": 1768351461196.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "11,15",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1768434327,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1768434327205,
+    "read_only": false,
+    "read_only_alternatives": []
+}

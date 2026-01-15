@@ -1,0 +1,4 @@
+"0","p <- ggplot2::ggplot(data, aes(x=CholesterolHDL)) +"
+"0","  geom_density(color=""black"", fill = 'lightblue') +"
+"0","  geom_vline(aes(xintercept=80), color = 'blue', linetype = 'dashed', linewidth = 1)"
+"0","print(p)"

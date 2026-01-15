@@ -1,0 +1,154 @@
+---
+title: Exploratory Data Analysis(EDA) for Alzheimer disease dataset
+author: Chaeeun Shin
+output: html_document
+---
+
+# Introduction
+This exploratory data analysis (EDA) examines a synthesized Alzheimer’s disease dataset to understand patient demographics and clinical characteristics prior to formal statistical analysis and modeling. The workflow includes systematic data cleaning, recoding of misclassified categorical variables, removal of non-informative identifiers, and verification of missingness. Distributions of continuous variables are visualized using histograms and density plots, both overall and stratified by Alzheimer’s diagnosis status, to assess group-level differences and potential distributional assumptions. Categorical variables are summarized through frequency tables and bar plots, with additional stratification by diagnosis to highlight patterns in comorbidities and reported symptoms. This analysis provides a structured and reproducible foundation for subsequent inferential and predictive modeling.
+
+---
+
+# Package Install
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+# Reading data
+```{r}
+setwd("/Users/chaeeunshin/Desktop/AlzAnalysis/data")
+data <- read.csv("alzheimers_disease_data.csv")
+head(data)
+```
+
+# 3. Conversion to categorical data
+```{r}
+data$Gender <- as.factor(data$Gender)
+data$Ethnicity <- as.factor(data$Ethnicity)
+data$EducationLevel <- as.factor(data$EducationLevel)
+data$Smoking <- as.factor(data$Smoking)
+data$FamilyHistoryAlzheimers <- as.factor(data$FamilyHistoryAlzheimers)
+data$CardiovascularDisease <- as.factor(data$CardiovascularDisease)
+data$Diabetes <- as.factor(data$Diabetes)
+data$Depression <- as.factor(data$Depression)
+data$HeadInjury <- as.factor(data$HeadInjury)
+data$Hypertension <- as.factor(data$Hypertension)
+data$MemoryComplaints <- as.factor(data$MemoryComplaints)
+data$BehavioralProblems <- as.factor(data$BehavioralProblems)
+data$Confusion <- as.factor(data$Confusion)
+data$Disorientation <- as.factor(data$Disorientation)
+data$PersonalityChanges <- as.factor(data$PersonalityChanges)
+data$DifficultyCompletingTasks <- as.factor(data$DifficultyCompletingTasks)
+data$Forgetfulness <- as.factor(data$Forgetfulness)
+data$Diagnosis <- as.factor(data$Diagnosis)
+
+data <- data %>% dplyr::select(-c(PatientID, DoctorInCharge))
+```
+
+# Identifying missing data
+```{r}
+missing_summary <- sapply(data, function(x) sum(is.na(x)))
+cat("\nMissing Data Summary\n")
+print(missing_summary)
+saveRDS(data,'data.rds')
+file.rename(
+  from = 'data.rds',
+  to = "/Users/chaeeunshin/Desktop/AlzAnalysis/data/data.rds"
+)
+```
+
+# Distribution of numeric variables
+```{r}
+cat("\nHistograms of Continuous Variables:\n")
+continuous_columns <- data[, sapply(data, is.numeric)]
+width <- c(Age = 10,BMI = 5,AlcoholConsumption = 5,PhysicalActivity = 2,DietQuality = 2,SleepQuality = 2,SystolicBP = 10,DiastolicBP = 10,CholesterolTotal = 30,CholesterolLDL = 30,CholesterolHDL = 10,CholesterolTriglycerides = 70,MMSE = 5, FunctionalAssessment = 2,ADL = 2)
+for (col in colnames(continuous_columns)) {
+  binwidth <- width[[col]]
+ p <- ggplot(data, aes_string(x=col)) +
+   geom_histogram(binwidth = binwidth, fill = 'skyblue', color = 'white') +
+   labs(title = paste('Distribution of', col),
+        x = col,
+        y = "Frequency") +
+   theme_minimal()
+ print(p)
+}
+```
+Histograms of numeric data are generated. 
+
+# Distribution of numeric variables, based on diagnosis status
+```{r}
+data_vis <- data %>%
+  mutate(
+    Diagnosis = factor(
+      Diagnosis,
+      levels = c(0, 1),
+      labels = c("Does Not Have Alzheimer's", "Has Alzheimer's")
+    )
+  )
+
+cat("\nDensity Plots of Continuous Variables by Diagnosis:\n")
+
+for (col in colnames(continuous_columns)) {
+  p <- ggplot(data_vis, aes(x = .data[[col]], fill = Diagnosis)) +
+    geom_density(alpha = 0.5) +
+    labs(title = paste("Density of", col, "by Diagnosis"), x = col) +
+    scale_fill_manual(values = c("skyblue", "deepskyblue4")) +
+    theme_minimal()
+  print(p)
+}
+```
+
+# Distribution of categorical variables
+```{r}
+cat("\nHistograms of Categorical Variables:\n")
+categorical_variables <- data[sapply(data, is.factor)]
+categorical_variables$Gender <- ifelse(categorical_variables$Gender==0,'Male','Female')
+categorical_variables <- categorical_variables %>%
+  mutate(Ethnicity = case_when(
+    Ethnicity == 0 ~ 'Caucasian',
+    Ethnicity == 1 ~ 'African American',
+    Ethnicity == 2 ~ 'Asian',
+    TRUE ~ 'Other'),
+    EducationLevel = case_when(
+      EducationLevel == 0 ~ 'None',
+      EducationLevel == 1 ~ 'High School',
+      EducationLevel == 2 ~ "Bachelor's",
+      TRUE ~ 'Higher')
+  )
+
+categorical_variables[,4:18] <- ifelse(categorical_variables[4:18]==0,'No','Yes')
+
+for (c in 1:ncol(categorical_variables)) {
+  counts <- categorical_variables %>% 
+    count(!!sym(colnames(categorical_variables)[c])) %>%
+    mutate(Percentage = n / sum(n) * 100)
+  p <- ggplot(counts, aes_string(x=colnames(categorical_variables)[c], y = "n")) +
+    geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+    geom_text(aes(label = paste0(round(Percentage,1),"%")), vjust = -0.5) +
+    labs(title = paste("Bar Plot of", colnames(categorical_variables)[c]),
+         x = colnames(categorical_variables)[c],
+         y = "Count") + theme_minimal()
+  print(p)
+}
+```
+ 
+# Distribution of categorical variables, based on diagnosis status
+```{r}
+cat("\nHistograms of Categorical Variables based on Diagnosis:\n")
+for (c in 1:ncol(categorical_variables)) {
+  if (colnames(categorical_variables)[c]=='Diagnosis') next
+  counts <- categorical_variables %>%
+    count(!!sym(colnames(categorical_variables)[c]), Diagnosis)
+  p <- ggplot(counts, aes_string(x = colnames(categorical_variables)[c], y = "n", fill = "Diagnosis")) +
+    geom_bar(stat = "identity", position = "stack", color = "black") +
+    labs(title = paste("Stacked Bar Plot of", colnames(categorical_variables)[c], "by Diagnosis"),
+         x = colnames(categorical_variables)[c],
+         y = "Count",
+         fill = "Diagnosis") +
+    theme_minimal() +
+    scale_fill_manual(values = c("Yes" = "skyblue", "No" = "deepskyblue4"))  
+  print(p)
+}
+```
